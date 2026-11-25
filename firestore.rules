@@ -1,0 +1,290 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: default deny all paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'kevinmosesbinali@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin()
+        || (isSignedIn()
+          && request.auth.token.email_verified == true
+          && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // Entity validators
+    function isValidService(data) {
+      return data.keys().hasAll([
+          'name', 'slug', 'category', 'description', 'priceText',
+          'durationText', 'imageUrl', 'featured', 'active', 'sortOrder', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name', 'slug', 'category', 'description', 'priceText',
+          'durationText', 'imageUrl', 'featured', 'active', 'sortOrder', 'updatedAt'
+        ])
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 100
+        && data.slug is string && data.slug.size() >= 2 && data.slug.size() <= 100 && data.slug.matches('^[a-z0-9\\-]+$')
+        && data.category is string && data.category.size() >= 2 && data.category.size() <= 60
+        && data.description is string && data.description.size() >= 10 && data.description.size() <= 800
+        && data.priceText is string && data.priceText.size() <= 80
+        && data.durationText is string && data.durationText.size() <= 60
+        && data.imageUrl is string && data.imageUrl.size() >= 1 && data.imageUrl.size() <= 500
+        && data.featured is bool
+        && data.active is bool
+        && data.sortOrder is number && data.sortOrder >= 0 && data.sortOrder <= 1000
+        && data.updatedAt == request.time;
+    }
+
+    function isValidBookingCreate(data) {
+      return data.keys().hasAll([
+          'customerName', 'phone', 'email', 'treatmentId', 'treatmentName',
+          'preferredDate', 'preferredTime', 'location', 'message',
+          'status', 'adminNote', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'customerName', 'phone', 'email', 'treatmentId', 'treatmentName',
+          'preferredDate', 'preferredTime', 'location', 'message',
+          'status', 'adminNote', 'createdAt', 'updatedAt'
+        ])
+        && data.customerName is string && data.customerName.size() >= 2 && data.customerName.size() <= 120
+        && data.phone is string && data.phone.size() >= 7 && data.phone.size() <= 30
+        && data.email is string && data.email.size() <= 150
+        && data.treatmentId is string && data.treatmentId.size() <= 128
+        && data.treatmentName is string && data.treatmentName.size() >= 2 && data.treatmentName.size() <= 120
+        && data.preferredDate is string && data.preferredDate.size() >= 8 && data.preferredDate.size() <= 20
+        && data.preferredTime is string && data.preferredTime.size() >= 3 && data.preferredTime.size() <= 30
+        && data.location is string && data.location.size() >= 2 && data.location.size() <= 200
+        && data.message is string && data.message.size() <= 1000
+        && data.status == 'pending'
+        && data.adminNote is string && data.adminNote.size() == 0
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    function isValidBookingUpdate(data) {
+      return data.keys().hasAll([
+          'customerName', 'phone', 'email', 'treatmentId', 'treatmentName',
+          'preferredDate', 'preferredTime', 'location', 'message',
+          'status', 'adminNote', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'customerName', 'phone', 'email', 'treatmentId', 'treatmentName',
+          'preferredDate', 'preferredTime', 'location', 'message',
+          'status', 'adminNote', 'createdAt', 'updatedAt'
+        ])
+        && data.status is string && data.status in ['pending', 'approved', 'completed', 'rejected']
+        && data.adminNote is string && data.adminNote.size() <= 500
+        && data.createdAt == existing().createdAt
+        && data.updatedAt == request.time
+        && data.customerName == existing().customerName
+        && data.phone == existing().phone
+        && data.email == existing().email
+        && data.treatmentId == existing().treatmentId
+        && data.treatmentName == existing().treatmentName
+        && data.preferredDate == existing().preferredDate
+        && data.preferredTime == existing().preferredTime
+        && data.location == existing().location
+        && data.message == existing().message;
+    }
+
+    function isValidEnquiryCreate(data) {
+      return data.keys().hasAll([
+          'name', 'phone', 'email', 'subject', 'message',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name', 'phone', 'email', 'subject', 'message',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 120
+        && data.phone is string && data.phone.size() >= 7 && data.phone.size() <= 30
+        && data.email is string && data.email.size() <= 150
+        && data.subject is string && data.subject.size() >= 2 && data.subject.size() <= 160
+        && data.message is string && data.message.size() >= 5 && data.message.size() <= 1500
+        && data.status == 'new'
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    function isValidEnquiryUpdate(data) {
+      return data.keys().hasAll([
+          'name', 'phone', 'email', 'subject', 'message',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name', 'phone', 'email', 'subject', 'message',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && data.status is string && data.status in ['new', 'replied', 'archived']
+        && data.createdAt == existing().createdAt
+        && data.updatedAt == request.time
+        && data.name == existing().name
+        && data.phone == existing().phone
+        && data.email == existing().email
+        && data.subject == existing().subject
+        && data.message == existing().message;
+    }
+
+    function isValidGalleryItem(data) {
+      return data.keys().hasAll(['title', 'category', 'caption', 'imageUrl', 'sortOrder', 'updatedAt'])
+        && data.keys().hasOnly(['title', 'category', 'caption', 'imageUrl', 'sortOrder', 'updatedAt'])
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 120
+        && data.category is string && data.category.size() >= 2 && data.category.size() <= 60
+        && data.caption is string && data.caption.size() <= 300
+        && data.imageUrl is string && data.imageUrl.size() >= 1 && data.imageUrl.size() <= 500
+        && data.sortOrder is number && data.sortOrder >= 0 && data.sortOrder <= 1000
+        && data.updatedAt == request.time;
+    }
+
+    function isValidTestimonial(data) {
+      return data.keys().hasAll([
+          'clientName', 'suburb', 'treatmentName', 'quote',
+          'rating', 'isSample', 'published', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'clientName', 'suburb', 'treatmentName', 'quote',
+          'rating', 'isSample', 'published', 'updatedAt'
+        ])
+        && data.clientName is string && data.clientName.size() >= 2 && data.clientName.size() <= 100
+        && data.suburb is string && data.suburb.size() >= 2 && data.suburb.size() <= 80
+        && data.treatmentName is string && data.treatmentName.size() >= 2 && data.treatmentName.size() <= 100
+        && data.quote is string && data.quote.size() >= 10 && data.quote.size() <= 600
+        && data.rating is number && data.rating >= 1 && data.rating <= 5
+        && data.isSample is bool
+        && data.published is bool
+        && data.updatedAt == request.time;
+    }
+
+    function isValidBusinessSettings(data) {
+      return data.keys().hasAll([
+          'businessName', 'slogan', 'heroHeading', 'heroIntro', 'aboutHeadline',
+          'aboutStory', 'locationText', 'serviceAreaLabel', 'whatsappNumber',
+          'whatsappIntl', 'phoneNumber', 'email', 'operatingHours',
+          'mapLat', 'mapLng', 'mapZoom', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'businessName', 'slogan', 'heroHeading', 'heroIntro', 'aboutHeadline',
+          'aboutStory', 'locationText', 'serviceAreaLabel', 'whatsappNumber',
+          'whatsappIntl', 'phoneNumber', 'email', 'operatingHours',
+          'mapLat', 'mapLng', 'mapZoom', 'updatedAt'
+        ])
+        && data.businessName is string && data.businessName.size() >= 2 && data.businessName.size() <= 120
+        && data.slogan is string && data.slogan.size() >= 5 && data.slogan.size() <= 200
+        && data.heroHeading is string && data.heroHeading.size() >= 5 && data.heroHeading.size() <= 200
+        && data.heroIntro is string && data.heroIntro.size() >= 10 && data.heroIntro.size() <= 600
+        && data.aboutHeadline is string && data.aboutHeadline.size() >= 5 && data.aboutHeadline.size() <= 200
+        && data.aboutStory is string && data.aboutStory.size() >= 20 && data.aboutStory.size() <= 2500
+        && data.locationText is string && data.locationText.size() >= 2 && data.locationText.size() <= 160
+        && data.serviceAreaLabel is string && data.serviceAreaLabel.size() >= 2 && data.serviceAreaLabel.size() <= 200
+        && data.whatsappNumber is string && data.whatsappNumber.size() >= 7 && data.whatsappNumber.size() <= 20
+        && data.whatsappIntl is string && data.whatsappIntl.size() >= 7 && data.whatsappIntl.size() <= 20
+        && data.phoneNumber is string && data.phoneNumber.size() >= 7 && data.phoneNumber.size() <= 20
+        && data.email is string && data.email.size() <= 150
+        && data.operatingHours is string && data.operatingHours.size() <= 160
+        && data.mapLat is number && data.mapLat >= -90 && data.mapLat <= 90
+        && data.mapLng is number && data.mapLng >= -180 && data.mapLng <= 180
+        && data.mapZoom is number && data.mapZoom >= 1 && data.mapZoom <= 22
+        && data.updatedAt == request.time;
+    }
+
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['email', 'addedAt'])
+        && data.keys().hasOnly(['email', 'addedAt'])
+        && data.email is string && data.email.size() >= 5 && data.email.size() <= 150
+        && data.addedAt == request.time;
+    }
+
+    // Connection validation document
+    match /test/{docId} {
+      allow get: if docId == 'connection';
+    }
+
+    // Publicly browsable treatments; admin write
+    match /services/{serviceId} {
+      allow get: if isValidId(serviceId);
+      allow list: if true;
+      allow create, update: if isAdmin() && isValidId(serviceId) && isValidService(incoming());
+      allow delete: if isAdmin() && isValidId(serviceId);
+    }
+
+    // Customer appointment requests: public create-only (pending), admin read/update/delete
+    match /bookings/{bookingId} {
+      allow create: if isValidId(bookingId) && isValidBookingCreate(incoming());
+      allow get: if isAdmin() && isValidId(bookingId);
+      allow list: if isBootstrappedAdmin();
+      allow update: if isAdmin()
+        && isValidId(bookingId)
+        && isValidBookingUpdate(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'adminNote', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(bookingId);
+    }
+
+    // Customer contact enquiries: public create-only (new), admin read/update/delete
+    match /enquiries/{enquiryId} {
+      allow create: if isValidId(enquiryId) && isValidEnquiryCreate(incoming());
+      allow get: if isAdmin() && isValidId(enquiryId);
+      allow list: if isBootstrappedAdmin();
+      allow update: if isAdmin()
+        && isValidId(enquiryId)
+        && isValidEnquiryUpdate(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(enquiryId);
+    }
+
+    // Gallery items: public read, admin write
+    match /gallery/{itemId} {
+      allow get: if isValidId(itemId);
+      allow list: if true;
+      allow create, update: if isAdmin() && isValidId(itemId) && isValidGalleryItem(incoming());
+      allow delete: if isAdmin() && isValidId(itemId);
+    }
+
+    // Testimonials: public reads only published items; admins read/write all
+    match /testimonials/{testimonialId} {
+      allow get: if isValidId(testimonialId) && (isAdmin() || existing().published == true);
+      allow list: if existing().published == true || isBootstrappedAdmin();
+      allow create, update: if isAdmin() && isValidId(testimonialId) && isValidTestimonial(incoming());
+      allow delete: if isAdmin() && isValidId(testimonialId);
+    }
+
+    // Singleton business settings document
+    match /settings/{settingId} {
+      allow get: if settingId == 'business';
+      allow create, update: if isAdmin() && settingId == 'business' && isValidBusinessSettings(incoming());
+    }
+
+    // Admin registry
+    match /admins/{uid} {
+      allow get: if isValidId(uid) && (isAdmin() || (isSignedIn() && request.auth.uid == uid));
+      allow list: if isBootstrappedAdmin();
+      allow create, update: if isAdmin() && isValidId(uid) && isValidAdminUser(incoming());
+      allow delete: if isAdmin() && isValidId(uid);
+    }
+  }
+}

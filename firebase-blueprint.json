@@ -1,0 +1,155 @@
+{
+  "entities": {
+    "Service": {
+      "title": "Spa Service",
+      "description": "A beauty or wellness treatment offered by Viccie Mobile Spa.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "slug": { "type": "string", "minLength": 2, "maxLength": 100, "pattern": "^[a-z0-9-]+$" },
+        "category": { "type": "string", "minLength": 2, "maxLength": 60 },
+        "description": { "type": "string", "minLength": 10, "maxLength": 800 },
+        "priceText": { "type": "string", "maxLength": 80 },
+        "durationText": { "type": "string", "maxLength": 60 },
+        "imageUrl": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "featured": { "type": "boolean" },
+        "active": { "type": "boolean" },
+        "sortOrder": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "slug", "category", "description", "priceText", "durationText", "imageUrl", "featured", "active", "sortOrder", "updatedAt"]
+    },
+    "Booking": {
+      "title": "Appointment Booking Request",
+      "description": "A customer appointment request submitted through the Viccie Mobile Spa booking form.",
+      "type": "object",
+      "properties": {
+        "customerName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "phone": { "type": "string", "minLength": 7, "maxLength": 30 },
+        "email": { "type": "string", "maxLength": 150 },
+        "treatmentId": { "type": "string", "maxLength": 128 },
+        "treatmentName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "preferredDate": { "type": "string", "minLength": 8, "maxLength": 20 },
+        "preferredTime": { "type": "string", "minLength": 3, "maxLength": 30 },
+        "location": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "message": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["pending", "approved", "completed", "rejected"] },
+        "adminNote": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["customerName", "phone", "email", "treatmentId", "treatmentName", "preferredDate", "preferredTime", "location", "message", "status", "adminNote", "createdAt", "updatedAt"]
+    },
+    "Enquiry": {
+      "title": "Customer Enquiry",
+      "description": "A general contact enquiry submitted via the Contact page.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "phone": { "type": "string", "minLength": 7, "maxLength": 30 },
+        "email": { "type": "string", "maxLength": 150 },
+        "subject": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "message": { "type": "string", "minLength": 5, "maxLength": 1500 },
+        "status": { "type": "string", "enum": ["new", "replied", "archived"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "phone", "email", "subject", "message", "status", "createdAt", "updatedAt"]
+    },
+    "GalleryItem": {
+      "title": "Gallery Image",
+      "description": "A curated photograph displayed in the Viccie Mobile Spa gallery.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "category": { "type": "string", "minLength": 2, "maxLength": 60 },
+        "caption": { "type": "string", "maxLength": 300 },
+        "imageUrl": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "sortOrder": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "category", "caption", "imageUrl", "sortOrder", "updatedAt"]
+    },
+    "Testimonial": {
+      "title": "Customer Testimonial",
+      "description": "A client review displayed on the website when published.",
+      "type": "object",
+      "properties": {
+        "clientName": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "suburb": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "treatmentName": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "quote": { "type": "string", "minLength": 10, "maxLength": 600 },
+        "rating": { "type": "number" },
+        "isSample": { "type": "boolean" },
+        "published": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clientName", "suburb", "treatmentName", "quote", "rating", "isSample", "published", "updatedAt"]
+    },
+    "BusinessSettings": {
+      "title": "Business Settings & Website Content",
+      "description": "Editable business contact info, copy, and map coordinates for Viccie Mobile Spa.",
+      "type": "object",
+      "properties": {
+        "businessName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "slogan": { "type": "string", "minLength": 5, "maxLength": 200 },
+        "heroHeading": { "type": "string", "minLength": 5, "maxLength": 200 },
+        "heroIntro": { "type": "string", "minLength": 10, "maxLength": 600 },
+        "aboutHeadline": { "type": "string", "minLength": 5, "maxLength": 200 },
+        "aboutStory": { "type": "string", "minLength": 20, "maxLength": 2500 },
+        "locationText": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "serviceAreaLabel": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "whatsappNumber": { "type": "string", "minLength": 7, "maxLength": 20 },
+        "whatsappIntl": { "type": "string", "minLength": 7, "maxLength": 20 },
+        "phoneNumber": { "type": "string", "minLength": 7, "maxLength": 20 },
+        "email": { "type": "string", "maxLength": 150 },
+        "operatingHours": { "type": "string", "maxLength": 160 },
+        "mapLat": { "type": "number" },
+        "mapLng": { "type": "number" },
+        "mapZoom": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["businessName", "slogan", "heroHeading", "heroIntro", "aboutHeadline", "aboutStory", "locationText", "serviceAreaLabel", "whatsappNumber", "whatsappIntl", "phoneNumber", "email", "operatingHours", "mapLat", "mapLng", "mapZoom", "updatedAt"]
+    },
+    "AdminUser": {
+      "title": "Authorized Administrator",
+      "description": "Maps an authorized admin Firebase UID to their email and role.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "minLength": 5, "maxLength": 150 },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "addedAt"]
+    }
+  },
+  "firestore": {
+    "/services/{serviceId}": {
+      "schema": { "$ref": "#/entities/Service" },
+      "description": "Publicly readable spa treatment catalog managed by admins."
+    },
+    "/bookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/Booking" },
+      "description": "Customer appointment requests; public create-only in pending status, admin-only read and status management."
+    },
+    "/enquiries/{enquiryId}": {
+      "schema": { "$ref": "#/entities/Enquiry" },
+      "description": "Customer contact form enquiries; public create-only in new status, admin-only read and status management."
+    },
+    "/gallery/{itemId}": {
+      "schema": { "$ref": "#/entities/GalleryItem" },
+      "description": "Publicly viewable spa photo gallery managed by admins."
+    },
+    "/testimonials/{testimonialId}": {
+      "schema": { "$ref": "#/entities/Testimonial" },
+      "description": "Client testimonials; published items readable publicly, all items managed by admins."
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/BusinessSettings" },
+      "description": "Singleton business configuration document at settings/business."
+    },
+    "/admins/{uid}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Authorized admin UID registry."
+    }
+  }
+}

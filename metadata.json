@@ -1,0 +1,6 @@
+{
+  "name": "Viccie Mobile Spa",
+  "description": "Luxury mobile beauty spa and wellness services in Cape Town, South Africa. Relax, Refresh, Rejuvenate – Beauty and Wellness at Your Convenience.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
